@@ -1,8 +1,8 @@
 # a - $f20
-# b - $f21
-# c - $f22
-# d - $f23
-# f - $f24
+# b - $f22
+# c - $f24
+# d - $f26
+# f - $f28
 # r - $s0
 # s - $s1
 # x - $s2
@@ -27,24 +27,24 @@ main:
   syscall
 
   # get a
-  li $v0, 6
+  li $v0, 7
   syscall
-  mov.s $f20, $f0
+  mov.d $f20, $f0
 
   # get b
-  li $v0, 6
+  li $v0, 7
   syscall
-  mov.s $f21, $f0
+  mov.d $f22, $f0
 
   # get c
-  li $v0, 6
+  li $v0, 7
   syscall
-  mov.s $f22, $f0
+  mov.d $f24, $f0
 
   # get d
-  li $v0, 6
+  li $v0, 7
   syscall
-  mov.s $f23, $f0
+  mov.d $f26, $f0
 
 do_while:
   # print the second prompt
@@ -72,29 +72,29 @@ for:
 
   # now x ($f4) can be used as a float
   mtc1 $s2, $f4
-  cvt.s.w $f4, $f4
+  cvt.d.w $f4, $f4
 
   # $f5 = a*x*x*x
-  mul.s $f24, $f20, $f4
-  mul.s $f24, $f24, $f4
-  mul.s $f24, $f24, $f4
+  mul.d $f28, $f20, $f4
+  mul.d $f28, $f28, $f4
+  mul.d $f28, $f28, $f4
 
   # $f5 += b*x*x
-  mul.s $f6, $f21, $f4
-  mul.s $f6, $f6, $f4
-  add.s $f24, $f24, $f6
+  mul.d $f6, $f22, $f4
+  mul.d $f6, $f6, $f4
+  add.d $f28, $f28, $f6
   
   # $f5 += c*x
-  mul.s $f6, $f22, $f4
-  add.s $f24, $f24, $f6
+  mul.d $f6, $f24, $f4
+  add.d $f28, $f28, $f6
 
   # $f5 += d
-  add.s $f24, $f24, $f23
+  add.d $f28, $f28, $f26
 
 if:
   # f >= 2.1
-  li.s $f6, 2.1
-  c.lt.s $f24, $f6
+  li.d $f6, 2.1
+  c.lt.d $f28, $f6
   bc1t if_end
 
   # print f(x) = $f5
@@ -110,8 +110,8 @@ if:
   la $a0, func2
   syscall
 
-  li $v0, 2
-  mov.s $f12, $f24
+  li $v0, 3
+  mov.d $f12, $f28
   syscall
 
 if_end:
