@@ -62,6 +62,8 @@ do_while:
   syscall
   move $s1, $v0
 
+  bgt $s0, $s1, do_while
+
   # prepare the for loop: x = r
   move $s2, $s0
 for:
