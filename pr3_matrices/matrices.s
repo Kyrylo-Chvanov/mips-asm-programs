@@ -133,12 +133,12 @@ print_mat:
   # for(int f = 0; f < nFil; f++)
   li $s2, 0
 print_for_f:
-  bge $s2, $s0, for_f_end
+  bge $s2, $s0, print_for_f_end
 
   # for(int c = 0; c < nCol; c++) {
   li $s3, 0
 print_for_c:
-  bge $s3, $s1, for_c_end
+  bge $s3, $s1, print_for_c_end
   # std::cout << elem[f*nCol + c] << ' ';
   l.s $f12, 0($s4)
   li $v0, 2
@@ -152,16 +152,16 @@ print_for_c:
   addi $s4, sizeF
 
   addi $s3, 1
-  b for_c
+  b print_for_c
 
 print_for_c_end:
   # std::cout << '\n';
   li $v0, 11
   li $a0, LF
   syscall
-  
+
   addi $s2, 1
-  b for_f
+  b print_for_f
 
 print_for_f_end:
   # std::cout << '\n';
@@ -310,17 +310,217 @@ find_for_f_end:
   jr $ra
 find_min_fin:
 
+# int main() {
+# $s0 - matTrabajo
+# $s1 - indFil
+# $s2 - indCol
+# $s3 - option
+# $s4 - filaMin
+# $s5 - columnaMin
+# $f20 - valorMin
 main:
-  la $a0, mat1
-  jal find_min
+  # std::cout << "\nComienza programa manejo matrices con funciones\n";
+  li $v0, 4
+  la $a0, str_titulo
+  syscall
+  la $s0, mat1
+
+while:
+  move $a0, $s0
+  jal print_mat
+
+  # print menu
+  li $v0, 4
+  la $a0, str_menu 
+  syscall
   
-  mov.s $f4, $f0
-  move $t0, $v0
-  move $t1, $v1
+  # std::cin >> opcion;
+  li $v0, 5
+  syscall
+
+  # if(opcion == 0) {
+  beq $v0, 0, exit
+  # if(opcion == 1) {
+  beq $v0, 1, option_1
+  # if(opcion == 3 || opcion == 4) {
+  beq $v0, 3, option_34
+  beq $v0, 4, option_34
+  # if(opcion == 7) {
+  beq $v0, 7, option_7
+
+  li $v0, 4
+  la $a0, str_errorOpc
+  syscall
+  b while
+
+option_1:
+  # std::cout << "\nElije la matriz de trabajo (1..6): ";
+  li $v0, 4
+  la $a0, str_elijeMat
+  syscall
+
+  # std::cin >> matT;
+  li $v0, 5
+  syscall
+
+  # if (matT == 1) {
+if_mat1:
+  bne $v0, 1, if_mat2
+  la $s0, mat1
+  b while
+  # if (matT == 2) {
+if_mat2:
+  bne $v0, 2, if_mat3
+  la $s0, mat2
+  b while
+  # if (matT == 3) {
+if_mat3:
+  bne $v0, 3, if_mat4
+  la $s0, mat3
+  b while
+  # if (matT == 4) {
+if_mat4:
+  bne $v0, 4, if_mat5
+  la $s0, mat4
+  b while
+  # if (matT == 5) {
+if_mat5:
+  bne $v0, 5, if_mat6
+  la $s0, mat5
+  b while
+  # if (matT == 6) {
+if_mat6:
+  bne $v0, 6, else
+  la $s0, mat6
+  b while
+else:
+  # std::cout << "Numero de matriz de trabajo incorrecto\n";
+  li $v0, 4
+  la $a0, str_numMatMal
+  syscall
+  b while
+
+option_34:
+  # save the option
+  move $s3, $v0
+  # std::cout << "\nIndice de fila: ";
+  li $v0, 4
+  la $a0, str_indFila
+  syscall
+
+  # std::cin >> indFil;
+  li $v0, 5
+  syscall
+
+  # if ((indFil < 0) || (indFil >= matTrabajo->nFil)) {
+  lw $t2, nFil($s0)
+  sge $t0, $v0, $zero
+  slt $t1, $v0, $t2
+  and $t0, $t0, $t1
+  bnez $t0, if_good_file
+  # std::cerr << "Error: dimension incorrecta.  Numero de fila incorrecto\n";
+  li $v0, 4
+  la $a0, str_errorFil
+  syscall
+  b while
+
+if_good_file:
+  # save the value
+  move $s1, $v0
+  # std::cout << "Indice de columna: ";
+  li $v0, 4
+  la $a0, str_indCol
+  syscall
+
+  # std::cin >> indCol;
+  li $v0, 5
+  syscall
+
+  # if ((indCol < 0) || (indCol >= matTrabajo->nCol)) {
+  lw $t2, nCol($s0)
+  sge $t0, $v0, $zero
+  slt $t1, $v0, $t2
+  and $t0, $t0, $t1
+  bnez $t0, if_good_col
+  # std::cerr << "Error: dimension incorrecta.  Numero de columna incorrecto\n";
+  li $v0, 4
+  la $a0, str_errorCol
+  syscall
+  b while
+
+if_good_col:
+  move $s2, $v0
+  # if (opcion == 3) {
+  beq $s3, 3, option_3
+  # if (opcion == 4) {
+  beq $s3, 4, option_4
+option_3:
+  # std::cout << "Nuevo valor para el elemento: ";
+  li $v0, 4
+  la $a0, str_nuevoValor
+  syscall
+
+  # std::cin >> valor;
+  li $v0, 6
+  syscall
+
+  # change_elto(matTrabajo, indFil, indCol, valor);
+  move $a0, $s0
+  move $a1, $s1
+  move $a2, $s2
+  mov.s $f12, $f0
+  jal change_elto
+  b while
+
+option_4:
+  # intercambia(matTrabajo, indFil, indCol);
+  move $a0, $s0
+  move $a1, $s1
+  move $a2, $s2
+  jal intecambia
+  b while
+
+option_7:
+  # std::tie(valorMin, filaMin, columnaMin) = find_min(matTrabajo);
+  move $a0, $s0
+  jal find_min
+  # std::cout << "\nEl valor minimo esta en (" << filaMin << ','
+  #   << columnaMin <<") con valor " << valorMin;
+  mov.s $f20, $f0
+  move $s4, $v0
+  move $s5, $v1
+
+  li $v0, 4
+  la $a0, str_valMin
+  syscall
+
+  li $v0, 1
+  move $a0, $s4
+  syscall
+  
+  li $v0, 11
+  li $a0, ','
+  syscall
+  
+  li $v0, 1
+  move $a0, $s5
+  syscall
+
+  li $v0, 4
+  la $a0, str_conValor
+  syscall
 
   li $v0, 2
-  mov.s $f12, $f4
+  mov.s $f12, $f20
   syscall
+  b while
+
 exit:
+  # std::cout << "\nTermina el programa\n";
+  li $v0, 4
+  la $a0, str_termina
+  syscall
+  
+  # exit
   li $v0, 10
   syscall
