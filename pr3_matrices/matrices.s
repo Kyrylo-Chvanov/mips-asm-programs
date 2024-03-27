@@ -1,6 +1,7 @@
 # Solución PR3 curso 23-24
 # Manejo de matrices con funciones
 # Autor: Kyrylo Chvanov
+# Ultima modificacion: 27/03/2024
 
 # typedef struct {
 #   int nFil;
@@ -131,12 +132,12 @@ print_mat:
 
   # for(int f = 0; f < nFil; f++)
   li $s2, 0
-for_f:
+print_for_f:
   bge $s2, $s0, for_f_end
 
   # for(int c = 0; c < nCol; c++) {
   li $s3, 0
-for_c:
+print_for_c:
   bge $s3, $s1, for_c_end
   # std::cout << elem[f*nCol + c] << ' ';
   l.s $f12, 0($s4)
@@ -153,7 +154,7 @@ for_c:
   addi $s3, 1
   b for_c
 
-for_c_end:
+print_for_c_end:
   # std::cout << '\n';
   li $v0, 11
   li $a0, LF
@@ -162,7 +163,7 @@ for_c_end:
   addi $s2, 1
   b for_f
 
-for_f_end:
+print_for_f_end:
   # std::cout << '\n';
   li $v0, 11
   li $a0, LF
@@ -212,7 +213,114 @@ swap:
   jr $ra
 swap_fin:
 
+# void intercambia(structMat* mat, int indF, int indC) {
+# $a0 - mat
+# $a1 - indF
+# $a2 - indC
+intecambia:
+  # int numFil = mat->nFil;
+  lw $t0, nFil($a0)
+  # int numCol = mat->nCol;
+  lw $t1, nCol($a0)
+  # float* datos = mat->elementos;
+  la $t2, elementos($a0)
+  # float* e1 = &datos[indF * numCol + indC]; // $t3 = e1
+  # indF * numCol 
+  mul $t3, $a1, $t1
+  # + indC
+  add $t3, $t3, $a2
+
+  li $t4, sizeF
+  mul $t3, $t3, $t4
+  add $t3, $t3, $t2
+  # float* e2 = &datos[(numFil - indF - 1) * numCol + (numCol - indC - 1)]; // $t5 = e2
+  # (numFil - indF - 1)
+  sub $t5, $t0, $a1
+  addi $t5, $t5, -1
+  # * numCol
+  mul $t5, $t5, $t1
+  # + (numCol - indC - 1)
+  add $t5, $t5, $t1
+  sub $t5, $t5, $a2
+  addi $t5, $t5, -1
+
+  mul $t5, $t5, $t4
+  add $t5, $t5, $t2
+
+  # save return addr
+  addi $sp, -4
+  sw $ra, 0($sp)
+
+  # swap(e1, e1)
+  move $a0, $t3
+  move $a1, $t5
+  jal swap
+
+  # load the return addr
+  lw $ra, 0($sp)
+  addi $sp, 4
+
+  jr $ra
+intecambia_fin:
+
+# std::tuple<float, int, int> find_min(structMat* mat) {
+# $a0 - mat
+# return:
+#   $f0 - value
+#   $v0 - index_fil
+#   $v1 - index_col
+find_min:
+  # int numFil = mat->nFil;
+  lw $t0, nFil($a0)
+  # int numCol = mat->nCol;
+  lw $t1, nCol($a0)
+  # float* datos = mat->elementos;
+  la $t2, elementos($a0)
+  # float min = infinito;
+  l.s $f0, infinito
+  # for(int f = 0; f < numFil; f++) {
+  li $t3, 0
+find_for_f:
+  bge $t3, $t0, find_for_f_end
+  # for(int c = 0; c < numCol; c++) {
+  li $t4, 0;
+find_for_c:
+  bge $t4, $t1, find_for_c_end
+
+  # float valor = datos[f * numCol + c];
+  l.s $f5, 0($t2)
+  # if (valor < min) {
+  c.lt.s $f5, $f0
+  bc1f if_end
+if:  
+  # min = valor;
+  mov.s $f0, $f5
+  # fmin = f;
+  move $v0, $t3
+  # cmin = c;
+  move $v1, $t4
+if_end:
+  addi $t2, sizeF
+  addi $t4, 1
+  b find_for_c
+find_for_c_end:
+  addi $t3, 1
+  b find_for_f
+find_for_f_end:
+  jr $ra
+find_min_fin:
+
 main:
+  la $a0, mat1
+  jal find_min
+  
+  mov.s $f4, $f0
+  move $t0, $v0
+  move $t1, $v1
+
+  li $v0, 2
+  mov.s $f12, $f4
+  syscall
 exit:
   li $v0, 10
   syscall
